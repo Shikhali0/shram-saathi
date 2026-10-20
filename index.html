@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shram Saathi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#2747C4">
+<meta name="description" content="Volunteer dashboard for a campus drive that helps workers learn about and register for national welfare schemes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..125,500..800&family=Mukta:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: a volunteer's counter desk. Sticky header + tab strip, one working column; results read like stamped counter slips. */
+:root{
+  --paper:#EEF1F6;      /* cool form-paper ground */
+  --surface:#FFFFFF;
+  --ink:#16233F;        /* government-form indigo ink */
+  --ink-2:#4B5774;
+  --line:#D5DBE6;
+  --accent:#2747C4;     /* rubber-stamp blue */
+  --accent-soft:#E3E8FA;
+  --marigold:#E0960E;   /* single brand flourish */
+  --good:#18794A; --good-soft:#E1F2E8;
+  --warn:#9A5B00; --warn-soft:#FBEFD9;
+  --muted:#6B7590; --muted-soft:#E7EAF0;
+  --f-display:"Anek Latin","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Mukta","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0D1322; --surface:#151D31; --ink:#E6EAF4; --ink-2:#A4AFC8; --line:#28334D;
+    --accent:#93A8FF; --accent-soft:#1E2A4E; --marigold:#F0AE3A;
+    --good:#5ACB8C; --good-soft:#123323; --warn:#F2B451; --warn-soft:#3A2A0E;
+    --muted:#8F99B3; --muted-soft:#1C2438;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0D1322; --surface:#151D31; --ink:#E6EAF4; --ink-2:#A4AFC8; --line:#28334D;
+  --accent:#93A8FF; --accent-soft:#1E2A4E; --marigold:#F0AE3A;
+  --good:#5ACB8C; --good-soft:#123323; --warn:#F2B451; --warn-soft:#3A2A0E;
+  --muted:#8F99B3; --muted-soft:#1C2438;
+}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+img{max-width:100%}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header::before{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--marigold) 0 33%,var(--accent) 33% 100%)}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding-block:12px 4px;flex-wrap:wrap}
+.brand h1{font-size:1.75rem;font-weight:800;font-stretch:80%;letter-spacing:.01em}
+.brand h1 span{color:var(--marigold)}
+.brand p{margin:0;color:var(--ink-2);font-size:.9rem}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;font-family:var(--f-display);font-weight:700;font-stretch:90%;font-size:1rem;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+nav.tabs .count{font-family:var(--f-mono);font-size:.75rem;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:1px 7px;margin-left:4px}
+
+main{padding-block:20px 64px}
+.eyebrow{font-family:var(--f-display);font-weight:700;font-size:.78rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-2)}
+.note{font-size:.9rem;color:var(--ink-2)}
+.page-h{font-size:1.6rem;font-stretch:88%}
+
+/* screener layout */
+.screen{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.screen{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.form-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.form-head h2{font-size:1.3rem;font-stretch:90%}
+.example{display:flex;gap:8px;align-items:center;background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:.85rem;margin-bottom:14px}
+fieldset{border:0;margin:0;padding:0;display:grid;gap:12px}
+fieldset+fieldset{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+legend{padding:0;margin-bottom:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+label.f{display:grid;gap:4px;font-size:.9rem;color:var(--ink-2)}
+input[type=number],select{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;font-size:1rem}
+.q{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.95rem}
+.q > span{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex-shrink:0}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:5px 11px;font-size:.85rem;cursor:pointer;background:var(--paper);color:var(--ink-2)}
+.seg label+input+label{border-left:1px solid var(--line)}
+.seg input:checked+label{background:var(--accent);color:var(--surface);font-weight:700}
+.seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:-2px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:700}
+
+/* results */
+.summary{display:flex;flex-wrap:wrap;gap:8px;margin-block:8px 18px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 11px;font-size:.85rem;font-weight:500}
+.chip b{font-family:var(--f-mono)}
+.s-yes{background:var(--good-soft);color:var(--good)}
+.s-check{background:var(--warn-soft);color:var(--warn)}
+.s-has{background:var(--accent-soft);color:var(--accent)}
+.s-no{background:var(--muted-soft);color:var(--muted)}
+.group{display:grid;gap:10px;margin-bottom:22px}
+.group > h3{font-size:1.05rem;font-stretch:90%}
+.slip{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:8px}
+.slip-top{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.slip h4{margin:0;font-family:var(--f-display);font-size:1.15rem;font-weight:700;font-stretch:92%}
+.slip .cost{font-family:var(--f-mono);font-size:.82rem;color:var(--ink-2)}
+.slip .why{font-size:.9rem;color:var(--ink-2)}
+.say{font-size:.95rem;border-left:3px solid var(--marigold);padding-left:10px}
+.stamp{font-family:var(--f-display);font-weight:800;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;border:1.5px solid currentColor;border-radius:4px;padding:2px 6px;transform:rotate(-2deg);white-space:nowrap;background:none}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.acts button{border:1px solid var(--line);background:var(--paper);border-radius:99px;padding:4px 12px;font-size:.85rem;cursor:pointer}
+.acts button[aria-pressed="true"]{background:var(--good);border-color:var(--good);color:var(--surface);font-weight:700}
+.acts button.ref[aria-pressed="true"]{background:var(--warn);border-color:var(--warn)}
+details.no-list summary{cursor:pointer;color:var(--ink-2);font-size:.95rem}
+details.no-list ul{margin:8px 0 0;padding-left:18px;color:var(--ink-2);font-size:.9rem}
+.docs{background:var(--surface);border:1px dashed var(--ink-2);border-radius:var(--r);padding:16px}
+.docs h3{font-size:1.1rem;font-stretch:90%;margin-bottom:8px}
+.docs ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.docs li{display:flex;gap:10px;align-items:baseline}
+.docs li::before{content:"";width:12px;height:12px;border:1.5px solid var(--ink-2);border-radius:3px;flex-shrink:0;transform:translateY(2px)}
+.docs li small{color:var(--ink-2)}
+.finish{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:18px;padding:14px 16px;background:var(--accent-soft);border-radius:var(--r)}
+.empty{padding:32px 16px;text-align:center;color:var(--ink-2)}
+
+/* form links */
+.forms{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.forms .lbl{font-size:.8rem;color:var(--ink-2);margin-right:2px}
+a.pdf{display:inline-flex;align-items:center;gap:6px;text-decoration:none;border:1px solid var(--accent);color:var(--accent);border-radius:6px;padding:2px 9px;font-size:.84rem;font-weight:500;background:var(--surface)}
+a.pdf::before{content:"PDF";font-family:var(--f-mono);font-size:.66rem;background:var(--accent);color:var(--surface);border-radius:3px;padding:0 4px;line-height:1.5}
+a.pdf:hover{background:var(--accent-soft)}
+a.web{display:inline-flex;text-decoration:none;border:1px dashed var(--ink-2);color:var(--ink);border-radius:6px;padding:2px 9px;font-size:.84rem}
+a.web::after{content:"↗";margin-left:5px;color:var(--ink-2)}
+.online{font-size:.84rem;color:var(--ink-2)}
+
+/* schemes directory */
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-block:12px 18px}
+.filters button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:4px 12px;font-size:.88rem;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.dir{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:12px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px}
+.card .cat{font-family:var(--f-display);font-weight:700;font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--accent)}
+.card h3{font-size:1.25rem;font-stretch:90%}
+.card .full{font-size:.85rem;color:var(--ink-2);margin-top:2px}
+.kv{display:grid;grid-template-columns:88px 1fr;gap:6px 10px;font-size:.92rem;margin:0}
+.kv dt{color:var(--ink-2);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;font-family:var(--f-display);font-weight:700;padding-top:3px}
+.kv dd{margin:0}
+.kv ul{margin:0;padding-left:16px}
+.src{font-size:.78rem;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:8px}
+
+/* forms tab */
+.ftable-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table.ft{border-collapse:collapse;width:100%;min-width:620px;font-size:.92rem}
+table.ft th,table.ft td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+table.ft th{font-family:var(--f-display);font-weight:700;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);background:var(--paper)}
+table.ft tr:last-child td{border-bottom:0}
+table.ft td:first-child{font-weight:700;white-space:nowrap}
+.tip-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-block:14px 18px}
+
+/* talk */
+.talk{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;align-items:start}
+.talk .panel h2{font-size:1.3rem;font-stretch:90%;margin-bottom:10px}
+ol.steps{margin:0;padding-left:20px;display:grid;gap:8px}
+.faq details{border-top:1px solid var(--line);padding-block:10px}
+.faq details:first-of-type{border-top:0}
+.faq summary{cursor:pointer;font-weight:700}
+.faq p{margin:6px 0 0;color:var(--ink-2)}
+.lines{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.lines li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.warnbox{background:var(--warn-soft);color:var(--ink);border-radius:var(--r);padding:14px 16px}
+.warnbox strong{color:var(--warn)}
+
+/* tally */
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-block:12px 20px}
+@media (max-width:520px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.tile .n{font-family:var(--f-display);font-weight:800;font-size:2.4rem;line-height:1;font-variant-numeric:tabular-nums}
+.tile .l{color:var(--ink-2);font-size:.9rem}
+.bars{display:grid;gap:8px}
+.bar-row{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:.9rem}
+@media (max-width:520px){.bar-row{grid-template-columns:110px 1fr 60px}}
+.track{height:14px;display:flex;gap:2px}
+.track span{height:100%;border-radius:0 4px 4px 0;min-width:0}
+.track .r{background:var(--good)}
+.track .f{background:var(--warn);opacity:.85}
+.bar-row .v{font-family:var(--f-mono);font-size:.82rem;text-align:right;color:var(--ink-2)}
+.legend{display:flex;gap:14px;font-size:.85rem;color:var(--ink-2);margin-bottom:10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.privacy{display:flex;gap:10px;align-items:start;background:var(--accent-soft);border-radius:var(--r);padding:12px 14px;font-size:.92rem}
+footer{color:var(--ink-2);font-size:.82rem;padding-block:0 32px}
+[role=tabpanel]:not(.on){display:none}
+@media (prefers-reduced-motion:no-preference){.slip{animation:in .18s ease-out}@keyframes in{from{transform:translateY(3px)}to{transform:none}}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <h1>Shram <span>Saathi</span></h1>
+      <p>Campus scheme registration drive · volunteer desk</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button role="tab" id="t-screen" aria-selected="true" aria-controls="p-screen">Check a worker</button>
+      <button role="tab" id="t-schemes" aria-selected="false" aria-controls="p-schemes">All 15 schemes</button>
+      <button role="tab" id="t-forms" aria-selected="false" aria-controls="p-forms">Forms</button>
+      <button role="tab" id="t-talk" aria-selected="false" aria-controls="p-talk">How to talk</button>
+      <button role="tab" id="t-tally" aria-selected="false" aria-controls="p-tally">Today's tally<span class="count" id="tallyBadge">0</span></button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ============ SCREENER ============ -->
+<section role="tabpanel" id="p-screen" class="on" aria-labelledby="t-screen">
+  <div class="screen">
+    <form class="panel" id="f" autocomplete="off">
+      <div class="form-head">
+        <h2>About the worker</h2>
+        <button type="button" class="btn" id="newBtn">New worker</button>
+      </div>
+      <div class="example" id="exampleNote">Example worker filled in. Tap <b>New worker</b> to start.</div>
+
+      <fieldset>
+        <legend class="eyebrow">Basics</legend>
+        <div class="row">
+          <label class="f">Age<input type="number" id="age" min="10" max="100" inputmode="numeric"></label>
+          <label class="f">Gender
+            <select id="gender"><option value="">Select</option><option value="f">Woman</option><option value="m">Man</option><option value="o">Other</option></select>
+          </label>
+        </div>
+        <div class="row">
+          <label class="f">Work
+            <select id="job"><option value="">Select</option><option value="mess">Mess staff</option><option value="hk">Housekeeping</option><option value="sec">Security</option><option value="elec">Electrician</option><option value="plumb">Plumber</option><option value="other">Other</option></select>
+          </label>
+          <label class="f">Monthly income (₹)<input type="number" id="income" min="0" step="500" inputmode="numeric"></label>
+        </div>
+      </fieldset>
+
+      <fieldset id="qs1">
+        <legend class="eyebrow">Work and money</legend>
+      </fieldset>
+      <fieldset id="qs2">
+        <legend class="eyebrow">Home and family</legend>
+      </fieldset>
+    </form>
+
+    <div id="results" aria-live="polite"></div>
+  </div>
+</section>
+
+<!-- ============ DIRECTORY ============ -->
+<section role="tabpanel" id="p-schemes" aria-labelledby="t-schemes">
+  <h2 class="page-h">Scheme directory</h2>
+  <p class="note">Every scheme in this drive, with who qualifies, what it costs, where to register and the official form.</p>
+  <div class="filters" id="filters"></div>
+  <div class="dir" id="dir"></div>
+</section>
+
+<!-- ============ FORMS ============ -->
+<section role="tabpanel" id="p-forms" aria-labelledby="t-forms">
+  <h2 class="page-h">Application forms</h2>
+  <p class="note">Every link opens the form from the official government website, so you always get the current version. Print copies before the drive day.</p>
+  <div class="tip-grid">
+    <div class="panel"><p class="eyebrow">Print in bulk</p><p style="margin:4px 0 0">PMSBY, PMJJBY and the Jan Dhan form are needed most. Print Gujarati and Hindi copies. Most mess and housekeeping staff read one of the two.</p></div>
+    <div class="panel"><p class="eyebrow">Where forms go</p><p style="margin:4px 0 0">Insurance, APY, Jan Dhan and Sukanya forms go to the worker's own bank branch or post office. Ujjwala forms go to any LPG distributor. Ration and widow pension forms go to the Mamlatdar office.</p></div>
+    <div class="panel"><p class="eyebrow">No paper form</p><p style="margin:4px 0 0">e-Shram, PM-SYM, Ayushman card, PMAY, PMMVY, JSY and the construction workers' card are done online, at a CSC, or by the Anganwadi or ASHA worker. Use the portal links instead.</p></div>
+  </div>
+  <div class="ftable-wrap"><table class="ft"><thead><tr><th>Scheme</th><th>Paper forms (official PDF)</th><th>Apply online / where</th></tr></thead><tbody id="ftbody"></tbody></table></div>
+</section>
+
+<!-- ============ TALK ============ -->
+<section role="tabpanel" id="p-talk" aria-labelledby="t-talk">
+  <div class="talk">
+    <div class="panel">
+      <h2>The 10-minute conversation</h2>
+      <ol class="steps">
+        <li><b>Greet in their language.</b> Hindi or Gujarati first. Say who you are: a student volunteer, not from their employer or contractor.</li>
+        <li><b>Ask before you explain.</b> Go through the questions on the "Check a worker" tab. Don't ask for Aadhaar numbers, only whether they have one.</li>
+        <li><b>Start with e-Shram.</b> It is free and opens the door to the rest. Then the two insurance covers, which together cost ₹456 a year.</li>
+        <li><b>Use the one-line pitch</b> on each result card. Keep it to 2–3 schemes per worker. Too many at once confuses.</li>
+        <li><b>Register on the spot</b> where the worker has their Aadhaar-linked phone. The OTP goes to their phone and they read it out themselves.</li>
+        <li><b>Hand over the printed form</b> for bank, LPG, ration or pension schemes. Help fill it, and tell them where to submit it.</li>
+        <li><b>Tap "Done, next worker"</b> to add them to today's tally. Nothing about them is saved.</li>
+      </ol>
+    </div>
+
+    <div class="panel faq">
+      <h2>Questions workers ask</h2>
+      <details open><summary>"Do I have to pay anything?"</summary><p>e-Shram, Jan Dhan, Ayushman card and ration card are free. PMSBY is ₹20 a year and PMJJBY ₹436 a year, cut from their bank account. Nobody at this drive takes cash. If anyone asks for a fee, tell a coordinator.</p></details>
+      <details><summary>"Will my contractor or employer know?"</summary><p>No. These are their own registrations with the government. They don't change their job, salary or PF.</p></details>
+      <details><summary>"PF is cut from my salary. Can I still join?"</summary><p>EPF/ESIC members cannot join e-Shram or PM-SYM. They can still take PMSBY, PMJJBY and Ayushman (if eligible). Check the payslip if they are unsure.</p></details>
+      <details><summary>"What if I go back to my village?"</summary><p>The e-Shram number works anywhere in India. With One Nation One Ration Card, their ration card works at any ration shop in any state.</p></details>
+      <details><summary>"Is my Aadhaar safe?"</summary><p>We don't write down or photocopy anything. The OTP is read only from their own phone, on the government site. Tell them never to share an OTP over a phone call.</p></details>
+      <details><summary>"Why do I need a nominee?"</summary><p>For the insurance and pension schemes, the nominee is who gets the money. Ask them to give a family member's name and age.</p></details>
+      <details><summary>"When is the insurance renewed?"</summary><p>PMJJBY and PMSBY run June to May. The amount is cut around 31 May, so they should keep that much in the account.</p></details>
+    </div>
+
+    <div class="panel">
+      <h2>Helplines to give out</h2>
+      <ul class="lines">
+        <li><span>e-Shram and PM-SYM</span><span class="mono">14434</span></li>
+        <li><span>Ayushman Bharat PM-JAY</span><span class="mono">14555</span></li>
+        <li><span>Jan Dhan / banking</span><span class="mono">1800 11 0001</span></li>
+        <li><span>Ration / food (most states)</span><span class="mono">1967</span></li>
+        <li><span>Cyber fraud (OTP scams)</span><span class="mono">1930</span></li>
+      </ul>
+    </div>
+
+    <div class="warnbox">
+      <strong>Before every drive day:</strong> recheck amounts and rules on the official sites linked on each scheme card. Schemes are revised often, and state rules (Gujarat here) decide who qualifies for ration, housing and health cover. This dashboard is a guide for volunteers, not an official eligibility decision.
+    </div>
+  </div>
+</section>
+
+<!-- ============ TALLY ============ -->
+<section role="tabpanel" id="p-tally" aria-labelledby="t-tally">
+  <div class="privacy"><span aria-hidden="true">●</span><div><b>Nothing is stored.</b> These counts live only in this browser tab. They have no names or ID numbers and disappear when you refresh or close the tab. Copy the summary before you leave.</div></div>
+  <div class="tiles">
+    <div class="tile"><div class="n" id="nWorkers">0</div><div class="l">workers met</div></div>
+    <div class="tile"><div class="n" id="nReg">0</div><div class="l">registrations done</div></div>
+    <div class="tile"><div class="n" id="nRef">0</div><div class="l">referrals given</div></div>
+  </div>
+  <div class="panel">
+    <div class="form-head"><h2 style="font-size:1.2rem;font-stretch:90%">By scheme</h2><button class="btn" id="copyBtn" type="button">Copy summary</button></div>
+    <div class="legend"><span><i style="background:var(--good)"></i>Registered</span><span><i style="background:var(--warn)"></i>Referred</span></div>
+    <div class="bars" id="bars"></div>
+    <p class="note" id="copyMsg" role="status"></p>
+  </div>
+</section>
+</main>
+
+<footer class="wrap">Facts checked against official government websites on 20 October 2026; each scheme card links its source. Forms open from the issuing department's website. Built for a student-run awareness drive. No data is collected.</footer>
+
+<script>
+const JS="https://jansuraksha.gov.in/Files/";
+const UJ="https://www.pmuy.gov.in/documents/";
+const S = [
+ {id:"eshram",name:"e-Shram card",full:"National database of unorganised workers",cat:"Foundation",cost:"Free",
+  benefit:"A 12-digit UAN that records them as an unorganised worker. Used to reach other schemes and support in emergencies. Works in every state and every job.",
+  who:"Any unorganised worker aged 16 or above who is not an EPFO/ESIC member and does not pay income tax.",
+  docs:["aadhaar","mobile","bankopt"],
+  where:"Self-register on eshram.gov.in with Aadhaar OTP, or at a Common Service Centre (CSC). Free of cost.",
+  say:"This card shows you are a worker of this country. It is free, takes ten minutes, and opens the door to the other schemes.",
+  spot:true, forms:[], online:[["eshram.gov.in","https://eshram.gov.in/"]], onlyOnline:"Online only, with Aadhaar OTP or at a CSC.",
+  src:[["e-Shram FAQ","https://eshram.gov.in/faqs"],["PIB note","https://www.pib.gov.in/PressNoteDetails.aspx?NoteId=159705&ModuleId=3&reg=3&lang=1"]]},
+ {id:"pmjjby",name:"PMJJBY",full:"Pradhan Mantri Jeevan Jyoti Bima Yojana",cat:"Insurance",cost:"₹436 / year",
+  benefit:"₹2 lakh to the family on death from any cause. Only accidental death is covered in the first 30 days.",
+  who:"Age 18–50 with a savings bank or post office account. Cover continues to 55 if renewed.",
+  docs:["aadhaar","bank","nominee"],
+  where:"Their bank branch, net/mobile banking or post office. Premium is auto-debited each year (cover runs June–May).",
+  say:"Less than ₹1.20 a day. If something happens to you, your family gets ₹2 lakh.",spot:true,
+  forms:[["Gujarati",JS+"PMJJBY/Gujarati/ApplicationForm.pdf"],["Hindi",JS+"PMJJBY/Hindi/ApplicationForm.pdf"],["English",JS+"PMJJBY/English/ApplicationForm.pdf"]],
+  online:[["Bank / post office",""]],
+  src:[["Dept. of Financial Services","https://financialservices.gov.in/pradhan-mantri-jeevan-jyoti-bima-yojana-pmjjby"],["Jan Suraksha rules","https://jansuraksha.gov.in/Files/PMJJBY/English/Rules.pdf"]]},
+ {id:"pmsby",name:"PMSBY",full:"Pradhan Mantri Suraksha Bima Yojana",cat:"Insurance",cost:"₹20 / year",
+  benefit:"₹2 lakh for accidental death or total permanent disability. ₹1 lakh for partial permanent disability.",
+  who:"Age 18–70 with a savings bank or post office account.",
+  docs:["aadhaar","bank","nominee"],
+  where:"Their bank branch, net/mobile banking or post office. Auto-debited each year (cover runs June–May).",
+  say:"₹20 a year for ₹2 lakh accident cover. Very useful for anyone who works with electricity, ladders or machines.",spot:true,
+  forms:[["Gujarati",JS+"PMSBY/Gujarati/ApplicationForm.pdf"],["Hindi",JS+"PMSBY/Hindi/ApplicationForm.pdf"],["English",JS+"PMSBY/English/ApplicationForm.pdf"]],
+  online:[["Bank / post office",""]],
+  src:[["Dept. of Financial Services","https://financialservices.gov.in/pradhan-mantri-suraksha-bima-yojana-pmsby"],["Jan Suraksha rules","https://jansuraksha.gov.in/Files/PMSBY/English/Rules.pdf"]]},
+ {id:"pmsym",name:"PM-SYM",full:"Pradhan Mantri Shram Yogi Maan-dhan",cat:"Pension",cost:"₹55–200 / month",
+  benefit:"Assured ₹3,000 a month after age 60. The government adds the same amount the worker pays. Spouse gets 50% as family pension.",
+  who:"Age 18–40, income up to ₹15,000 a month, not in EPFO/ESIC/NPS, not an income-tax payer.",
+  docs:["aadhaar","bank","mobile","nominee"],
+  where:"CSC, or self-enrol on maandhan.in. Monthly amount depends on joining age (₹55 at 18, ₹200 at 40), then auto-debit.",
+  say:"If you put ₹100, the government also puts ₹100. From 60 you get ₹3,000 every month for life.",spot:true,
+  forms:[], online:[["maandhan.in","https://maandhan.in/"]], onlyOnline:"Online at maandhan.in or a CSC. The bank auto-debit mandate is signed there.",
+  src:[["Maandhan portal","https://maandhan.in/show_content.php?lang=1&level=1&ls_id=28&lid=28&page=6"]]},
+ {id:"apy",name:"Atal Pension Yojana",full:"APY",cat:"Pension",cost:"₹42–1,454 / month",
+  benefit:"Guaranteed pension of ₹1,000 to ₹5,000 a month after 60. Same pension to the spouse after them, then the saved amount to the nominee.",
+  who:"Age 18–40 with a bank account. Anyone who is or has been an income-tax payer cannot join (since 1 Oct 2022).",
+  docs:["aadhaar","bank","mobile","nominee"],
+  where:"Their bank branch or post office. ₹42 a month at 18 for ₹1,000 pension, up to ₹1,454 at 40 for ₹5,000; auto-debited.",
+  say:"Choose the pension you want at 60. The younger you start, the smaller the monthly amount.",spot:false,
+  forms:[["Gujarati",JS+"APY/GUJARATI/ApplicationForm.pdf"],["Hindi",JS+"APY/Hindi/ApplicationForm.pdf"],["English",JS+"APY/ENGLISH/ApplicationForm.pdf"],["Post office (Eng)",JS+"APY/ENGLISH/ApplicationFormPostOffice.pdf"]],
+  online:[["Bank / post office",""]],
+  src:[["PFRDA","https://pfrda.org.in/web/pfrda/schemes/atal-pension-yojana-apy"],["Scheme details","https://jansuraksha.gov.in/Files/APY/ENGLISH/APY.pdf"]]},
+ {id:"pmjay",name:"Ayushman Bharat PM-JAY",full:"Pradhan Mantri Jan Arogya Yojana (PMJAY-MA in Gujarat)",cat:"Health",cost:"Free",
+  benefit:"₹5 lakh per family per year for cashless hospital treatment at empanelled hospitals, including illness they already have.",
+  who:"Families on the SECC 2011 / state lists, and every citizen aged 70+ regardless of income (Ayushman Vay Vandana card).",
+  docs:["aadhaar","ration"],
+  where:"Check on beneficiary.nha.gov.in or the Ayushman app. Card made on the app, at a CSC, or at the Arogya Mitra desk of an empanelled hospital.",
+  say:"If you are on the list, a hospital stay up to ₹5 lakh is free for your whole family. Let's check right now.",spot:true,
+  forms:[], online:[["beneficiary.nha.gov.in","https://beneficiary.nha.gov.in/"]], onlyOnline:"No paper form. Check eligibility and make the card online.",
+  src:[["Gujarat MA portal","https://ma.gujarat.gov.in/ABPMJAY.html"],["PIB (70+ cover)","https://www.pib.gov.in/PressReleasePage.aspx?PRID=2053883"]]},
+ {id:"pmjdy",name:"PM Jan Dhan",full:"Pradhan Mantri Jan Dhan Yojana",cat:"Banking & credit",cost:"Free",
+  benefit:"Zero-balance bank account with RuPay card (₹2 lakh accident cover for accounts opened after 28 Aug 2018), overdraft up to ₹10,000 for eligible holders, and direct transfer of government benefits.",
+  who:"Any resident aged 10+ without a bank account.",
+  docs:["aadhaar","photo","mobile"],
+  where:"Any bank branch or Bank Mitra. Needed before insurance and pension schemes.",
+  say:"A bank account with no minimum balance. Every other scheme pays into this.",spot:false,
+  forms:[["Hindi","https://pmjdy.gov.in/files/forms/account-opening/hindi.pdf"],["English","https://pmjdy.gov.in/files/forms/account-opening/English.pdf"]],
+  online:[["Any bank branch",""]],
+  src:[["PMJDY portal","https://pmjdy.gov.in/scheme"]]},
+ {id:"mudra",name:"PM MUDRA loan",full:"Pradhan Mantri MUDRA Yojana",cat:"Banking & credit",cost:"Bank interest, no collateral",
+  benefit:"Loans without collateral for small non-farm businesses. Shishu up to ₹50,000; Kishore ₹50,000–5 lakh; Tarun ₹5–10 lakh; Tarun Plus up to ₹20 lakh for past Tarun borrowers who repaid.",
+  who:"Anyone starting or growing a small business, such as an electrical or plumbing repair service, tiffin service or small shop.",
+  docs:["aadhaar","pan","bank","plan"],
+  where:"Any bank, small finance bank, NBFC or MFI, or online on udyamimitra.in. MUDRA uses no agents.",
+  say:"If you want to start your own repair work, a loan up to ₹50,000 needs no guarantee.",spot:false,
+  forms:[["Shishu (up to ₹50k)","https://www.mudra.org.in/Default/DownloadFile/Application_Form_for_Shishu.pdf"],["Kishore / Tarun","https://www.mudra.org.in/Default/DownloadFile/Common_loan_Application_form.pdf"]],
+  online:[["udyamimitra.in","https://udyamimitra.in/"]],
+  src:[["MUDRA","https://www.mudra.org.in/"],["PMMY kit","https://www.mudra.org.in/Home/PMMYBankersKit"]]},
+ {id:"nfsa",name:"Ration card / ONORC",full:"National Food Security Act · One Nation One Ration Card",cat:"Food, fuel & housing",cost:"Free grain",
+  benefit:"Free grain under PMGKAY (till Dec 2028): 5 kg per person a month for priority households, 35 kg per family for Antyodaya. With ONORC, a migrant can collect it at any ration shop in India using Aadhaar.",
+  who:"Households on the state's NFSA list. Migrants can use their home-state card here.",
+  docs:["aadhaar","ration"],
+  where:"Nearest fair price shop to collect. New Gujarat card through the Mamlatdar office (Form 2, free). Mera Ration app shows the nearest shop.",
+  say:"Your ration card from your home state works here too. You don't have to go home to get your grain.",spot:false,
+  forms:[["New card · Form 2 (Guj)","https://dcs-dof.gujarat.gov.in/pdf/dfcs/pdf/appli-1.pdf"],["Add a name · Form 3 (Guj)","https://dcs-dof.gujarat.gov.in/pdf/dfcs/pdf/appli-2.pdf"]],
+  online:[["Mamlatdar office",""]],
+  src:[["PIB (PMGKAY)","https://www.pib.gov.in/Pressreleaseshare.aspx?PRID=1980686"],["Gujarat food dept","https://dcs-dof.gujarat.gov.in/gu/application-forms"]]},
+ {id:"pmay",name:"PM Awas Yojana",full:"PMAY-Urban 2.0 / PMAY-Gramin",cat:"Food, fuel & housing",cost:"Subsidy",
+  benefit:"EWS families: up to ₹2.5 lakh to build on their own land, or an affordable house. LIG and MIG families: interest subsidy on a home loan. PMAY-G covers rural homes.",
+  who:"Urban families with no pucca house anywhere in India and no government house in the last 20 years. EWS up to ₹3 lakh/yr, LIG ₹3–6 lakh, MIG ₹6–9 lakh.",
+  docs:["aadhaar","income","bank","land"],
+  where:"Online on pmaymis.gov.in, or the city corporation (AMC in Ahmedabad). Gram panchayat for rural homes.",
+  say:"If your family has no pucca house, the government helps build or buy one.",spot:false,
+  forms:[], online:[["pmaymis.gov.in","https://pmaymis.gov.in/"]], onlyOnline:"Apply online or at the city corporation. No standard paper form.",
+  src:[["PMAY-U 2.0 FAQ","https://pmaymis.gov.in/pmaymis2_2024/faq.html"],["PIB (cabinet)","https://www.pib.gov.in/PressReleasePage.aspx?PRID=2043927"]]},
+ {id:"ssy",name:"Sukanya Samriddhi",full:"Sukanya Samriddhi Account",cat:"Women & girl child",cost:"₹250–1.5 lakh / year",
+  benefit:"Savings for a daughter at 8.2% (Oct–Dec 2026; revised every quarter), tax-free. Deposit for 15 years; matures at 21. Half can be withdrawn at 18 for education.",
+  who:"Parent or guardian of a girl below 10 years. Up to two daughters.",
+  docs:["birth","aadhaar","photo"],
+  where:"Post office or authorised bank.",
+  say:"Even ₹250 a year keeps the account open. At 21 your daughter gets the full amount with interest.",spot:false,
+  forms:[["Account opening · Form 1","https://www.nsiindia.gov.in/writereaddata/FileUploads/FORM1.pdf"]],
+  online:[["Post office / bank",""]],
+  src:[["National Savings Institute","https://www.nsiindia.gov.in/InternalPage.aspx?Id_Pk=171"]]},
+ {id:"pmmvy",name:"PM Matru Vandana",full:"Pradhan Mantri Matru Vandana Yojana",cat:"Women & girl child",cost:"Free",
+  benefit:"₹5,000 for the first child (plus JSY, about ₹6,000 in all). ₹6,000 for a second child if it is a girl.",
+  who:"Pregnant and breastfeeding women in any one listed group, including e-Shram card holders, NFSA ration card holders, PM-JAY beneficiaries and families earning under ₹8 lakh a year. Apply within 270 days of the birth.",
+  docs:["aadhaar","mcp","bank"],
+  where:"Anganwadi worker or ASHA registers her on the PMMVY portal.",
+  say:"For your pregnancy, the government gives ₹5,000 into your bank account. Your e-Shram card is enough to prove you qualify.",spot:false,
+  forms:[], online:[["pmmvy.wcd.gov.in","https://pmmvy.wcd.gov.in/"]], onlyOnline:"No paper form. The Anganwadi worker registers her on the portal.",
+  src:[["Ministry of WCD","https://wcd.gov.in/offerings/pradhan-mantri-matru-vandana-yojana"]]},
+ {id:"pmuy",name:"PM Ujjwala",full:"Pradhan Mantri Ujjwala Yojana",cat:"Women & girl child",cost:"Free connection",
+  benefit:"Free LPG connection in the woman's name. ₹300 subsidy a cylinder on the first four refills each year (₹1,200 a year, as of June 2026).",
+  who:"Adult woman (18+) of a poor household with no LPG connection. Migrants can self-declare their address.",
+  docs:["aadhaar","ration","bank"],
+  where:"pmuy.gov.in or any LPG distributor. Migrants add the self-declaration form instead of address proof.",
+  say:"A gas connection in your name, free, with a cheaper cylinder four times a year.",spot:false,
+  forms:[["KYC (Gujarati)",UJ+"KYC/KYC/Ujjwala%20KYC%20Form%20Gujarati.pdf"],["KYC (Hindi)",UJ+"Ujjwala-KYC_hindinew.pdf"],["KYC (English)",UJ+"Ujjwala-KYC_englishnew.pdf"],["Supplementary KYC",UJ+"Supplementary%20KYC.pdf"],["Migrant self-declaration (Guj)",UJ+"SelfDeclaration/Self%20Declaration%20Gujarati.pdf"],["Migrant self-declaration (Hindi)",UJ+"Annexure_I_new_hindi.pdf"],["Migrant self-declaration (Eng)",UJ+"Annexure_I_new.pdf"]],
+  online:[["pmuy.gov.in","https://www.pmuy.gov.in/"]],
+  src:[["PMUY portal","https://www.pmuy.gov.in/"],["PIB, 7 Jun 2026","https://www.pib.gov.in/PressReleasePage.aspx?PRID=2269944&reg=48&lang=1"]]},
+ {id:"jsy",name:"Janani Suraksha",full:"Janani Suraksha Yojana",cat:"Women & girl child",cost:"Free",
+  benefit:"Cash for delivering in a government hospital. Gujarat (a high-performing state): ₹700 for rural, ₹600 for urban mothers.",
+  who:"In Gujarat: BPL, SC or ST women delivering in a government health centre or accredited private hospital.",
+  docs:["mcp","aadhaar","bpl","bank"],
+  where:"ASHA worker or the government hospital at delivery.",
+  say:"Deliver at a government hospital and you get money for it, plus free care.",spot:false,
+  forms:[], online:[["Through ASHA / hospital",""]], onlyOnline:"No form. The ASHA worker or hospital processes it.",
+  src:[["National Health Mission","https://www.nhm.gov.in/index1.php?lang=1&level=3&sublinkid=841&lid=309"]]},
+ {id:"state",name:"Gujarat welfare schemes",full:"Ganga Swarupa widow pension · construction workers' board (BOCW)",cat:"Women & girl child",cost:"Free",
+  benefit:"Ganga Swarupa: ₹1,250 a month to widows by DBT. BOCW e-Nirman card: maternity, education, health and accident benefits for registered construction workers.",
+  who:"Widows living in Gujarat who have not remarried (age and income limits apply; confirm at the Mamlatdar office). Construction workers aged 18–60 with 90 days of building-site work in the last year; electricians and plumbers qualify.",
+  docs:["aadhaar","bank","death","work"],
+  where:"Widow pension: form at the Mamlatdar office (urban) or village VCE (rural). BOCW: register on enirmanbocw.gujarat.gov.in.",
+  say:"There is also state support for widows and for those who work on building sites.",spot:false,
+  forms:[["Widow pension form (Guj)","https://wcd.gujarat.gov.in/uploads/pdf/N5_wu1Il6KT3kJK7gtm_gkGzHN2WUKd-.pdf"]],
+  online:[["e-Nirman (BOCW)","https://enirmanbocw.gujarat.gov.in/"]],
+  src:[["Gujarat WCD forms","https://wcd.gujarat.gov.in/applicationform"],["Patan district (₹1,250)","https://patan.nic.in/scheme/gujarat-ganga-swarupa-yojana/"]]}
+];
+const DOC = {
+  aadhaar:["Aadhaar card",""], mobile:["Mobile linked to Aadhaar","for the OTP"], bankopt:["Bank account details","optional for e-Shram"], bank:["Bank passbook or cheque","account no. + IFSC"],
+  nominee:["Nominee's name, age, relation",""], ration:["Ration card",""], photo:["Passport-size photo",""], pan:["PAN card",""],
+  plan:["Quotation for tools / short business plan",""], income:["Income certificate",""], land:["Land or house papers","if building"],
+  birth:["Daughter's birth certificate",""], mcp:["MCP card (mother & child)","from Anganwadi/ASHA"], bpl:["BPL / caste certificate",""],
+  death:["Husband's death certificate","widow pension"], work:["Proof of 90 days' construction work","BOCW"]
+};
+const CATS = ["All",...new Set(S.map(s=>s.cat))];
+const ext=u=>`href="${u}" target="_blank" rel="noopener noreferrer"`;
+function formLinks(s,withOnline){
+  const f=s.forms.map(([l,u])=>`<a class="pdf" ${ext(u)}>${l}</a>`).join("");
+  const o=withOnline?s.online.filter(x=>x[1]).map(([l,u])=>`<a class="web" ${ext(u)}>${l}</a>`).join(""):"";
+  if(!f&&!o) return "";
+  return `<div class="forms">${f}${o}</div>`;
+}
+
+const Q1 = [
+ ["epf","Is PF or ESI cut from salary?",["yes","no","unsure"]],
+ ["tax","Pays income tax?",["yes","no"]],
+ ["bank","Has a bank account?",["yes","no"]],
+ ["amob","Mobile linked to Aadhaar?",["yes","no"]],
+ ["biz","Wants own business / loan?",["yes","no"]],
+];
+const Q2 = [
+ ["ration","Has a ration card?",["yes","no"]],
+ ["migrant","From another state?",["yes","no"]],
+ ["lpg","Home has LPG gas?",["yes","no"]],
+ ["house","Family owns a pucca house?",["yes","no"]],
+ ["daughter","Daughter under 10?",["yes","no"]],
+ ["preg","Pregnant or baby under 1?",["yes","no"],"f"],
+ ["widow","Widow?",["yes","no"],"f"],
+];
+const LBL={yes:"Yes",no:"No",unsure:"Not sure"};
+function seg([id,q,opts,only]){
+  return `<div class="q" data-only="${only||""}"><span>${q}</span><span class="seg" role="radiogroup" aria-label="${q}">${
+    opts.map(o=>`<input type="radio" name="${id}" id="${id}-${o}" value="${o}"><label for="${id}-${o}">${LBL[o]}</label>`).join("")}</span></div>`;
+}
+document.getElementById("qs1").insertAdjacentHTML("beforeend",Q1.map(seg).join(""));
+document.getElementById("qs2").insertAdjacentHTML("beforeend",Q2.map(seg).join(""));
+
+const EXAMPLE={age:34,gender:"f",job:"hk",income:12000,epf:"unsure",tax:"no",bank:"yes",amob:"yes",biz:"no",ration:"yes",migrant:"yes",lpg:"no",house:"no",daughter:"yes",preg:"no",widow:"no"};
+const f=document.getElementById("f");
+function setForm(p){
+  ["age","income","gender","job"].forEach(k=>f[k].value=p[k]??"");
+  [...Q1,...Q2].forEach(([k])=>{f.querySelectorAll(`[name=${k}]`).forEach(r=>r.checked=r.value===p[k])});
+}
+function getForm(){
+  const p={age:f.age.value===""?null:+f.age.value,income:f.income.value===""?null:+f.income.value,gender:f.gender.value,job:f.job.value};
+  [...Q1,...Q2].forEach(([k])=>{const r=f.querySelector(`[name=${k}]:checked`);p[k]=r?r.value:""});
+  return p;
+}
+
+// ---- eligibility rules: returns [status, reason]; status yes | check | has | no
+function rule(s,p){
+  const a=p.age, inc=p.income, w=p.gender==="f";
+  const noBank=p.bank==="no";
+  const bankNote=noBank?" Open a Jan Dhan account first.":"";
+  const trade=p.job==="elec"||p.job==="plumb";
+  switch(s.id){
+   case "eshram":
+    if(a<16) return["no","Open to workers aged 16 and above."];
+    if(p.epf==="yes") return["no","PF/ESI members are not covered by e-Shram."];
+    if(p.tax==="yes") return["no","Income-tax payers are not eligible."];
+    if(p.epf==="unsure") return["check","Eligible if no PF/ESI is cut from salary. Check the payslip."];
+    if(p.amob==="no") return["check","Eligible, but needs biometric authentication at a CSC since the mobile isn't linked to Aadhaar."];
+    return["yes","Age and work fit. Register now with Aadhaar OTP."];
+   case "pmjjby":
+    if(a<18||a>50) return["no","Joining age is 18–50."];
+    return noBank?["check","Age fits."+bankNote]:["yes","Age 18–50 with a bank account. Fill the form for their bank."];
+   case "pmsby":
+    if(a<18||a>70) return["no","Joining age is 18–70."];
+    return noBank?["check","Age fits."+bankNote]:["yes","Age 18–70 with a bank account. Fill the form for their bank."];
+   case "pmsym":
+    if(a<18||a>40) return["no","Joining age is 18–40."];
+    if(inc!=null&&inc>15000) return["no","Income is above ₹15,000 a month."];
+    if(p.epf==="yes") return["no","PF/ESI members cannot join."];
+    if(p.tax==="yes") return["no","Income-tax payers cannot join."];
+    if(p.epf==="unsure"||inc==null) return["check","Likely eligible. Confirm no PF/ESI deduction and income up to ₹15,000."+bankNote];
+    return noBank?["check","Eligible."+bankNote]:["yes","Age, income and work fit. Compare with APY and pick one."];
+   case "apy":
+    if(a<18||a>40) return["no","Joining age is 18–40."];
+    if(p.tax==="yes") return["no","Income-tax payers cannot join."];
+    return["check","Eligible at their bank. Compare with PM-SYM; most low-income workers get more from PM-SYM's matching."+bankNote];
+   case "pmjay":
+    if(a>=70) return["yes","Everyone aged 70+ is covered. Make the Vay Vandana card now."];
+    return["check","Search their name on beneficiary.nha.gov.in using Aadhaar"+(p.ration==="yes"?" or ration card.":".")];
+   case "pmjdy":
+    if(p.bank==="yes") return["has","Already has a bank account."];
+    if(a<10) return["no","Account holders must be 10+."];
+    return["yes","No bank account yet. Needed for most other schemes."];
+   case "mudra":
+    if(p.biz==="yes") return["yes","Wants to start or grow own work."];
+    if(trade) return["check","Mention it: a skilled tradesperson can start an own repair service."];
+    return["no","Only for those starting or growing a business."];
+   case "nfsa":
+    if(p.ration==="yes"&&p.migrant==="yes") return["yes","Can collect grain here with the home-state card. Show the Mera Ration app."];
+    if(p.ration==="yes") return["has","Already has a ration card."];
+    if(p.migrant==="yes") return["check","No ration card. Their home state issues it; if they have settled in Gujarat, use Form 2 at the Mamlatdar office."];
+    return["check","No ration card. Fill Form 2 and take it to the Mamlatdar office with family Aadhaar cards."];
+   case "pmay":
+    if(p.house==="yes") return["no","Family already owns a pucca house."];
+    if(inc!=null&&inc>75000) return["no","Income is above ₹9 lakh a year."];
+    if(inc!=null&&inc>25000) return["check","LIG/MIG income: only the home-loan interest subsidy applies."];
+    return["check","No pucca house and EWS income. Refer to AMC or pmaymis.gov.in (or gram panchayat at home)."];
+   case "ssy":
+    return p.daughter==="yes"?["yes","Has a daughter under 10. Give Form 1 for the post office."]:["no","Only for a daughter under 10."];
+   case "pmmvy":
+    if(!w) return p.preg==="yes"?["check","If his wife is pregnant, tell him she can register at the Anganwadi."]:["no","For pregnant or breastfeeding women."];
+    return p.preg==="yes"?["yes","Pregnant or has a baby under 1. Register through the Anganwadi."]:["no","For pregnant or breastfeeding women."];
+   case "pmuy":
+    if(p.lpg==="yes") return["has","Household already has LPG."];
+    if(w&&a>=18) return["yes","No LPG at home. Give the KYC form"+(p.migrant==="yes"?" and migrant self-declaration.":".")];
+    return["check","No LPG at home. The connection must be in the name of an adult woman in the family."];
+   case "jsy":
+    if(w&&p.preg==="yes") return["check","If BPL, SC or ST: deliver at a government hospital to get the cash."];
+    return["no","For pregnant BPL, SC or ST women."];
+   case "state":
+    if(w&&p.widow==="yes") return["yes","Widow. Give the Ganga Swarupa pension form."];
+    if(trade) return["check","If they worked 90+ days on building sites in the last year, register for the e-Nirman card."];
+    return["no","For widows and registered construction workers."];
+  }
+}
+
+let marks={};
+const tally={workers:0,reg:{},ref:{}};
+const R=document.getElementById("results");
+const GROUPS=[["yes","Eligible: talk about these"],["check","Check or refer"],["has","Already covered"]];
+const STAMP={yes:"Eligible",check:"Check",has:"Has it",no:"Not eligible"};
+
+function render(){
+  const p=getForm();
+  if(p.age==null){R.innerHTML=`<div class="panel empty"><h3 style="font-size:1.2rem">Enter the worker's age to begin</h3><p>Results update as you answer. The more questions you answer, the more accurate the results.</p></div>`;return}
+  const res=S.map(s=>({s,r:rule(s,p)}));
+  const by=k=>res.filter(x=>x.r[0]===k);
+  const cnt=k=>by(k).length;
+  let h=`<p class="eyebrow">Results for this worker</p><div class="summary">
+    <span class="chip s-yes"><b>${cnt("yes")}</b> eligible</span><span class="chip s-check"><b>${cnt("check")}</b> to check</span>
+    <span class="chip s-has"><b>${cnt("has")}</b> already has</span><span class="chip s-no"><b>${cnt("no")}</b> not eligible</span></div>`;
+  for(const [k,title] of GROUPS){
+    const L=by(k); if(!L.length) continue;
+    if(k==="yes") L.sort((a,b)=>b.s.spot-a.s.spot);
+    h+=`<div class="group"><h3>${title}</h3>${L.map(({s,r})=>slip(s,r,k)).join("")}</div>`;
+  }
+  const no=by("no");
+  if(no.length) h+=`<details class="no-list"><summary>Not eligible (${no.length})</summary><ul>${no.map(({s,r})=>`<li><b>${s.name}</b>: ${r[1]}</li>`).join("")}</ul></details>`;
+  const need=new Set(); res.filter(x=>x.r[0]==="yes"||x.r[0]==="check").forEach(x=>x.s.docs.forEach(d=>need.add(d)));
+  if(need.has("bank")) need.delete("bankopt");
+  if(need.size) h+=`<div class="docs" style="margin-top:18px"><h3>Ask them to bring</h3><ul>${[...need].map(d=>`<li><span>${DOC[d][0]} ${DOC[d][1]?`<small>· ${DOC[d][1]}</small>`:""}</span></li>`).join("")}</ul></div>`;
+  const nm=Object.keys(marks).length;
+  h+=`<div class="finish"><span>${nm?`<b>${nm}</b> scheme${nm>1?"s":""} marked for this worker.`:"Mark schemes as registered or referred, then finish."}</span><button class="btn primary" type="button" id="doneBtn">Done, next worker</button></div>`;
+  R.innerHTML=h;
+}
+function slip(s,r,k){
+  const act = k==="has"?"":`<div class="acts"><button type="button" data-m="reg" data-id="${s.id}" aria-pressed="${marks[s.id]==="reg"}">Registered today</button><button type="button" class="ref" data-m="ref" data-id="${s.id}" aria-pressed="${marks[s.id]==="ref"}">Referred</button></div>`;
+  const fl = k==="has"?"":(formLinks(s,true)||"");
+  return `<article class="slip"><div class="slip-top"><div><h4>${s.name}</h4><span class="cost">${s.cost}${s.spot?" · can do on the spot":""}</span></div><span class="stamp s-${k}">${STAMP[k]}</span></div>
+  <div class="why">${r[1]}</div>${k!=="has"?`<div class="say">${s.say}</div>`:""}${fl}${act}</article>`;
+}
+R.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.id==="doneBtn"){finishWorker();return}
+  if(b.dataset.m){const id=b.dataset.id,m=b.dataset.m; marks[id]===m?delete marks[id]:marks[id]=m; render();}
+});
+f.addEventListener("input",()=>{hideExample();render()});
+f.addEventListener("change",()=>{hideExample();applyOnly();render()});
+function hideExample(){document.getElementById("exampleNote").hidden=true}
+function applyOnly(){const g=f.gender.value;f.querySelectorAll("[data-only=f]").forEach(el=>el.hidden=g!=="f")}
+function newWorker(){marks={};setForm({});applyOnly();hideExample();render();f.age.focus()}
+document.getElementById("newBtn").onclick=newWorker;
+function finishWorker(){
+  tally.workers++;
+  for(const [id,m] of Object.entries(marks)) tally[m][id]=(tally[m][id]||0)+1;
+  renderTally(); newWorker();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ---- tally
+function renderTally(){
+  const sum=o=>Object.values(o).reduce((a,b)=>a+b,0);
+  document.getElementById("nWorkers").textContent=tally.workers;
+  document.getElementById("nReg").textContent=sum(tally.reg);
+  document.getElementById("nRef").textContent=sum(tally.ref);
+  document.getElementById("tallyBadge").textContent=tally.workers;
+  const rows=S.map(s=>({s,r:tally.reg[s.id]||0,f:tally.ref[s.id]||0})).filter(x=>x.r+x.f>0).sort((a,b)=>(b.r+b.f)-(a.r+a.f));
+  const max=Math.max(1,...rows.map(x=>x.r+x.f));
+  document.getElementById("bars").innerHTML=rows.length?rows.map(x=>`<div class="bar-row" title="${x.s.name}: ${x.r} registered, ${x.f} referred"><span>${x.s.name}</span><div class="track">${x.r?`<span class="r" style="width:${x.r/max*100}%"></span>`:""}${x.f?`<span class="f" style="width:${x.f/max*100}%"></span>`:""}</div><span class="v">${x.r} · ${x.f}</span></div>`).join("")
+   :`<p class="empty" style="padding:16px 0">No workers finished yet. On the "Check a worker" tab, mark schemes and tap <b>Done, next worker</b>. Counts appear here.</p>`;
+}
+document.getElementById("copyBtn").onclick=async()=>{
+  const lines=[`Shram Saathi drive tally, ${new Date().toLocaleDateString("en-IN")}`,`Workers met: ${tally.workers}`];
+  S.forEach(s=>{const r=tally.reg[s.id]||0,x=tally.ref[s.id]||0;if(r+x)lines.push(`${s.name}: ${r} registered, ${x} referred`)});
+  const msg=document.getElementById("copyMsg");
+  try{await navigator.clipboard.writeText(lines.join("\n"));msg.textContent="Summary copied. Paste it into your notes or group chat."}
+  catch(e){msg.textContent="Copy is blocked here. Select and copy this instead: "+lines.join(" | ")}
+};
+
+// ---- directory
+let cat="All";
+function renderDir(){
+  document.getElementById("filters").innerHTML=CATS.map(c=>`<button type="button" aria-pressed="${c===cat}" data-c="${c}">${c}</button>`).join("");
+  document.getElementById("dir").innerHTML=S.filter(s=>cat==="All"||s.cat===cat).map(s=>`<article class="card">
+    <div><div class="cat">${s.cat}</div><h3>${s.name}</h3><div class="full">${s.full}</div></div>
+    <dl class="kv"><dt>Benefit</dt><dd>${s.benefit}</dd><dt>Cost</dt><dd class="mono">${s.cost}</dd><dt>Who</dt><dd>${s.who}</dd>
+    <dt>Bring</dt><dd><ul>${s.docs.map(d=>`<li>${DOC[d][0]}</li>`).join("")}</ul></dd><dt>Where</dt><dd>${s.where}</dd>
+    <dt>Forms</dt><dd>${s.forms.length?formLinks(s,false):`<span class="online">${s.onlyOnline}</span>`}</dd></dl>
+    <div class="say">${s.say}</div>
+    <div class="src">Source: ${s.src.map(([l,u])=>`<a ${ext(u)}>${l}</a>`).join(" · ")}</div></article>`).join("");
+}
+document.getElementById("filters").addEventListener("click",e=>{const b=e.target.closest("button");if(b){cat=b.dataset.c;renderDir()}});
+
+// ---- forms table
+document.getElementById("ftbody").innerHTML=S.map(s=>`<tr><td>${s.name}</td>
+  <td>${s.forms.length?formLinks(s,false):`<span class="online">${s.onlyOnline}</span>`}</td>
+  <td>${s.online.map(([l,u])=>u?`<a class="web" ${ext(u)}>${l}</a>`:`<span class="online">${l}</span>`).join(" ")}</td></tr>`).join("");
+
+// ---- tabs
+const tabs=[...document.querySelectorAll("[role=tab]")];
+tabs.forEach(t=>t.addEventListener("click",()=>{
+  tabs.forEach(x=>{const on=x===t;x.setAttribute("aria-selected",on);document.getElementById(x.getAttribute("aria-controls")).classList.toggle("on",on)});
+  window.scrollTo({top:0});
+}));
+
+setForm(EXAMPLE); applyOnly(); render(); renderDir(); renderTally();
+</script>
+</body>
+</html>
